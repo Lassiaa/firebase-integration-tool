@@ -1,8 +1,26 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { onAuthStateChanged } from "firebase/auth";
+import { auth } from "../utils/firebase";
+
+import LoggedUser from "../components/LoggedUser";
 
 const ToolPage = () => {
+  const navigate = useNavigate();
+
   const [isAISetup, setAISetup] = useState(false);
   const [isManualSetup, setManualSetup] = useState(false);
+
+  // Redirect to the front page if the user is not signed in
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (!user) {
+        navigate("/");
+      }
+    });
+
+    return () => unsubscribe();
+  }, [navigate]);
 
   const manualSetupSelection = () => {
     if (!isManualSetup) {
@@ -142,7 +160,7 @@ const ToolPage = () => {
                   <li key={index} className="flex my-4">
                     <label className="relative inline-flex items-center cursor-pointer">
                       <input type="checkbox" className="sr-only peer" />
-                      <div className="mr-2 w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:bg-blue-600 after:content-[''] after:absolute after:top-[4px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:after:translate-x-full peer-checked:after:border-white"></div>
+                      <div className="mr-2 w-11 h-6 bg-gray-400 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:bg-blue-600 after:content-[''] after:absolute after:top-[4px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:after:translate-x-full peer-checked:after:border-white"></div>
                     </label>
                     <h3 className="text-xl font-bold">{item}</h3>
                   </li>
@@ -185,6 +203,8 @@ const ToolPage = () => {
           </button>
         </article>
       </section>
+
+      <LoggedUser />
     </main>
   );
 };
