@@ -1,4 +1,4 @@
-# Firebase Integrastion Tool
+# Firebase Integration Tool
 
 ## [lassiaa.github.io/firebase-integration-tool/](https://lassiaa.github.io/firebase-integration-tool/)
 
