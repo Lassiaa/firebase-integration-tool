@@ -1,10 +1,34 @@
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { auth } from "../utils/firebase";
-import { signOut } from "firebase/auth";
+import {
+  getAuth,
+  onAuthStateChanged,
+  signOut,
+  setPersistence,
+  browserLocalPersistence,
+} from "firebase/auth";
 
 const LoggedUser = () => {
   const navigate = useNavigate();
-  const userName = auth.currentUser?.displayName || "User";
+  const [user, setUser] = useState(null);
+  const auth = getAuth();
+
+  useEffect(() => {
+    setPersistence(auth, browserLocalPersistence).catch((error) =>
+      console.error("Error setting persistence:", error)
+    );
+
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      if (currentUser) {
+        setUser(currentUser);
+      } else {
+        setUser(null);
+        navigate("/");
+      }
+    });
+
+    return () => unsubscribe();
+  }, [auth, navigate]);
 
   const handleSignOut = async () => {
     try {
@@ -16,10 +40,12 @@ const LoggedUser = () => {
     }
   };
 
+  if (!user) return null;
+
   return (
     <section className="fixed top-0 right-0 p-4 text-center">
-      <h3 className="text-xl font-bold">Logged in as:</h3>
-      <p className="my-2">{userName}</p>
+      <h3 className="text-xl font-bold">Signed in</h3>
+      <p className="my-2">{user.displayName || "User"}</p>
       <button
         onClick={handleSignOut}
         className="bg-red-600 text-white rounded-md px-3 py-1 mx-auto block hover:bg-red-800 ease-in-out duration-150"
