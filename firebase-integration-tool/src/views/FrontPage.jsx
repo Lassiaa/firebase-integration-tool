@@ -26,7 +26,7 @@ const FrontPage = () => {
         console.log("Firebase ID Token:", idToken);
         localStorage.setItem("idToken", idToken);
 
-        navigate("/tool");
+        navigate("/project");
       }
     } catch (error) {
       if (error.code === "auth/popup-closed-by-user") {

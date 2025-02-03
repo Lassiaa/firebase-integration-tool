@@ -1,173 +1,143 @@
 import { useEffect, useState } from "react";
-import { auth } from "../utils/firebase";
+// import { auth } from "../utils/firebase";
 
 import LoggedUser from "../components/LoggedUser";
 import AISetup from "../components/AISetup";
 
 const ToolPage = () => {
   const [isManualSetup, setManualSetup] = useState(false);
-  const [selectedFeatures, setSelectedFeatures] = useState({
-    Analytics: false,
-    Authentication: false,
-    "Firestore Database": false,
-    Functions: false,
-    "Realtime Database": false,
-    Storage: false,
+
+  const [selectedFeatures, setSelectedFeatures] = useState(() => {
+    const savedFeatures = localStorage.getItem("selectedFeatures");
+
+    return savedFeatures
+      ? JSON.parse(savedFeatures)
+      : {
+          Analytics: false,
+          Authentication: false,
+          "Firestore Database": false,
+          Functions: false,
+          "Realtime Database": false,
+          Storage: false,
+        };
   });
-  const [selectedSettings, setSelectedSettings] = useState({
-    Analytics: [],
-    Authentication: [],
-    "Firestore Database": [],
-    Functions: [],
-    "Realtime Database": [],
-    Storage: [],
+
+  const [selectedSettings, setSelectedSettings] = useState(() => {
+    const savedSettings = localStorage.getItem("selectedSettings");
+
+    return savedSettings
+      ? JSON.parse(savedSettings)
+      : {
+          Analytics: [],
+          Authentication: [],
+          "Firestore Database": [],
+          Functions: [],
+          "Realtime Database": [],
+          Storage: [],
+        };
   });
-  const [reactProjectName, setReactProjectName] = useState(
-    localStorage.getItem("reactProjectName") || ""
-  );
-  const [firebaseProjectName, setFirebaseProjectName] = useState(
-    localStorage.getItem("firebaseProjectName") || ""
-  );
-  const [firebaseConfig, setFirebaseConfig] = useState(null);
 
-  const createFirebaseProject = async () => {
-    if (!firebaseProjectName) {
-      alert("Please provide a Firebase project name!");
-      return;
-    }
+  useEffect(() => {
+    localStorage.setItem("selectedFeatures", JSON.stringify(selectedFeatures));
+  }, [selectedFeatures]);
 
-    const userId = auth.currentUser?.uid;
-    if (!userId) {
-      alert("User is not signed in.");
-      return;
-    }
+  useEffect(() => {
+    localStorage.setItem("selectedSettings", JSON.stringify(selectedSettings));
+  }, [selectedSettings]);
 
-    try {
-      const accessToken = await auth.currentUser.getIdToken(true);
-
-      const response = await fetch(
-        import.meta.env.VITE_FIREBASE_CREATE_FUNCTION,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            firebaseProjectName,
-            userId,
-            accessToken,
-          }),
-        }
-      );
-
-      const data = await response.json();
-      console.log("Response:", data);
-
-      console.log("firebaseProjectName:", firebaseProjectName);
-      console.log("userId:", userId);
-      console.log("accessToken:", accessToken);
-
-      if (data.success) {
-        alert("Firebase project created successfully!");
-        setFirebaseConfig(data.config);
-      } else {
-        alert(`Error creating Firebase project: ${data.message}`);
-      }
-    } catch (error) {
-      console.error("Error:", error);
-      alert(
-        "An unexpected error occurred while creating the Firebase project."
-      );
-    }
+  const featureConfigs = {
+    Analytics: {
+      import: `import { getAnalytics } from "firebase/analytics";`,
+      init: `const analytics = getAnalytics(app);`,
+      settings: {
+        "Enable Debug Mode": `analytics.setAnalyticsCollectionEnabled(true);`,
+        "Set Reporting Threshold": `analytics.setReportMode(2);`,
+      },
+      export: "analytics",
+    },
+    Authentication: {
+      import: `import { getAuth, GoogleAuthProvider } from "firebase/auth";`,
+      init: `const auth = getAuth(app);`,
+      settings: {
+        "Google Auth": `const provider = new GoogleAuthProvider();`,
+        "Facebook Auth": `const provider = new FacebookAuthProvider();`,
+      },
+      export: "auth, provider",
+    },
+    "Firestore Database": {
+      import: `import { getFirestore } from "firebase/firestore";`,
+      init: `const firestore = getFirestore(app);`,
+      settings: {
+        "Enable Offline Persistence": `firestore.enablePersistence();`,
+        "Set Rules": `firestore.setRules({/* Custom rules here */});`,
+      },
+      export: "firestore",
+    },
+    Functions: {
+      import: `import { getFunctions } from "firebase/functions";`,
+      init: `const functions = getFunctions(app);`,
+      settings: {
+        "Enable Regions": `functions.useFunctionsEmulator("localhost", 5001);`,
+      },
+      export: "functions",
+    },
+    "Realtime Database": {
+      import: `import { getDatabase } from "firebase/database";`,
+      init: `const database = getDatabase(app);`,
+      settings: {
+        "Enable Offline Mode": `database.goOffline();`,
+        "Set Database Rules": `database.setRules({/* Custom rules here */});`,
+      },
+      export: "database",
+    },
+    Storage: {
+      import: `import { getStorage } from "firebase/storage";`,
+      init: `const storage = getStorage(app);`,
+      settings: {
+        "Enable File Versioning": `storage.enableVersioning();`,
+        "Storage Set Rules": `storage.setRules({/* Custom rules here */});`,
+      },
+      export: "storage",
+    },
   };
 
   const downloadFirebaseConfig = () => {
-    if (!firebaseConfig) {
-      alert("Firebase project is not set up yet.");
-      return;
-    }
-
-    const configContent = JSON.stringify(firebaseConfig, null, 2);
-
     const imports = [`import { initializeApp } from "firebase/app";`];
     const initializations = [`const app = initializeApp(firebaseConfig);`];
+    const exports = ["app"];
 
-    if (selectedFeatures.Analytics) {
-      imports.push(`import { getAnalytics } from "firebase/analytics";`);
-      initializations.push(`const analytics = getAnalytics(app);`);
-      if (selectedSettings.Analytics.includes("Enable Debug Mode")) {
-        initializations.push(`analytics.setAnalyticsCollectionEnabled(true);`);
+    Object.entries(featureConfigs).forEach(([feature, config]) => {
+      if (selectedFeatures[feature]) {
+        imports.push(config.import);
+        initializations.push(config.init);
+        exports.push(...config.export.split(", "));
+        Object.entries(config.settings).forEach(([setting, code]) => {
+          if (selectedSettings[feature]?.includes(setting)) {
+            initializations.push(code);
+          }
+        });
       }
-      if (selectedSettings.Analytics.includes("Set Reporting Threshold")) {
-        initializations.push(`analytics.setReportMode(2);`);
-      }
-    }
+    });
 
-    if (selectedFeatures.Authentication) {
-      imports.push(`import { getAuth } from "firebase/auth";`);
-      initializations.push(`const auth = getAuth(app);`);
-      if (selectedSettings.Authentication.includes("Google Auth")) {
-        imports.push(`import { GoogleAuthProvider } from "firebase/auth";`);
-        initializations.push(`const provider = new GoogleAuthProvider();`);
-      }
-    }
-
-    if (selectedFeatures["Firestore Database"]) {
-      imports.push(`import { getFirestore } from "firebase/firestore";`);
-      initializations.push(`const firestore = getFirestore(app);`);
-      if (
-        selectedSettings["Firestore Database"].includes(
-          "Enable Offline Persistence"
-        )
-      ) {
-        initializations.push(`firestore.enablePersistence();`);
-      }
-      if (selectedSettings["Firestore Database"].includes("Set Rules")) {
-        initializations.push(`firestore.setRules({/* Custom rules here */});`);
-      }
-    }
-
-    if (selectedFeatures.Functions) {
-      imports.push(`import { getFunctions } from "firebase/functions";`);
-      initializations.push(`const functions = getFunctions(app);`);
-      if (selectedSettings.Functions.includes("Enable Regions")) {
-        initializations.push(
-          `functions.useFunctionsEmulator("localhost", 5001);`
-        );
-      }
-    }
-
-    if (selectedFeatures["Realtime Database"]) {
-      imports.push(`import { getDatabase } from "firebase/database";`);
-      initializations.push(`const database = getDatabase(app);`);
-      if (
-        selectedSettings["Realtime Database"].includes("Enable Offline Mode")
-      ) {
-        initializations.push(`database.goOffline();`);
-      }
-    }
-
-    if (selectedFeatures.Storage) {
-      imports.push(`import { getStorage } from "firebase/storage";`);
-      initializations.push(`const storage = getStorage(app);`);
-      if (selectedSettings.Storage.includes("Enable File Versioning")) {
-        initializations.push(`storage.enableVersioning();`);
-      }
-    }
-
-    // Generate the content for the firebase.js file
     const fileContent = `
-    ${imports.join("\n")}
-
-    // Firebase configuration
-    const firebaseConfig = ${configContent};
+${imports.join("\n")}
+  
+// Firebase configuration
+const firebaseConfig = {
+  apiKey: "YOUR_API_KEY",
+  authDomain: "Testi.firebaseapp.com",
+  projectId: "Testi",
+  storageBucket: "Testi.appspot.com",
+  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+  appId: "YOUR_APP_ID",
+  measurementId: "YOUR_MEASUREMENT_ID",
+};
     
-    // Firebase initialization
-    ${initializations.join("\n")}
-
-    export { ${initializations
-      .map((init) => init.split(" ")[1])
-      .filter(Boolean)
-      .join(", ")} };
-  `;
+// Firebase initialization
+${initializations.join("\n")}
+  
+export { ${exports.join(", ")} };
+`;
 
     const blob = new Blob([fileContent], { type: "application/javascript" });
     const link = document.createElement("a");
@@ -178,12 +148,11 @@ const ToolPage = () => {
 
   // Toggle the selected features in Manual Setup
   const toggleFeature = (feature) => {
-    setSelectedFeatures((prevState) => ({
-      ...prevState,
-      [feature]: !prevState[feature],
-    }));
+    setSelectedFeatures((prevState) => {
+      const newState = { ...prevState, [feature]: !prevState[feature] };
+      return newState;
+    });
   };
-
   // Toggle additional setting for a feature
   const toggleSetting = (feature, setting) => {
     setSelectedSettings((prevSettings) => {
@@ -196,9 +165,6 @@ const ToolPage = () => {
         updatedSettings[feature] = [...featureSettings, setting];
       }
 
-      // Log the updated state
-      console.log(updatedSettings);
-
       return updatedSettings;
     });
   };
@@ -209,21 +175,12 @@ const ToolPage = () => {
 
   const additionalSettings = {
     Analytics: ["Enable Debug Mode", "Set Reporting Threshold"],
-    Authentication: ["Email/Password Auth", "Google Auth", "Facebook Auth"],
+    Authentication: ["Google Auth", "Facebook Auth"],
     "Firestore Database": ["Enable Offline Persistence", "Set Rules"],
     Functions: ["Enable Regions", "Set Environment Variables"],
     "Realtime Database": ["Enable Offline Mode", "Set Database Rules"],
     Storage: ["Set Rules", "Enable File Versioning"],
   };
-
-  // Save the project names to the local storage
-  useEffect(() => {
-    localStorage.setItem("reactProjectName", reactProjectName);
-  }, [reactProjectName]);
-
-  useEffect(() => {
-    localStorage.setItem("firebaseProjectName", firebaseProjectName);
-  }, [firebaseProjectName]);
 
   return (
     <main className="w-full px-2">
@@ -232,7 +189,10 @@ const ToolPage = () => {
       </h1>
 
       <section>
-        <AISetup />
+        <AISetup
+          setSelectedFeatures={setSelectedFeatures}
+          setSelectedSettings={setSelectedSettings}
+        />
         <article className="my-20">
           <div
             className="flex justify-center items-center cursor-pointer"
@@ -330,55 +290,15 @@ const ToolPage = () => {
         </article>
       </section>
 
-      <section>
-        <article className="my-20">
-          <h2 className="text-2xl font-bold text-center">Final Steps</h2>
-
-          {/* React Project Name Input */}
-          <div className="w-52 mx-auto">
-            <h3 className="text-xl font-bold">React project</h3>
-            <input
-              className="rounded-md w-full p-2 my-8 mx-auto block text-black"
-              type="text"
-              placeholder="React project..."
-              value={reactProjectName}
-              onChange={(e) => setReactProjectName(e.target.value)}
-            />
-          </div>
-
-          {/* Firebase Project Name Input */}
-          <div className="w-52 mx-auto">
-            <h3 className="text-xl font-bold">Firebase project</h3>
-            <input
-              className="rounded-md w-full p-2 my-8 mx-auto block text-black"
-              type="text"
-              placeholder="Firebase project..."
-              value={firebaseProjectName}
-              onChange={(e) => setFirebaseProjectName(e.target.value)}
-            />
-          </div>
-
-          {/* Button to trigger Firebase project creation */}
-          <div className="flex justify-center">
-            <button
-              onClick={createFirebaseProject} // Trigger the function here
-              className="bg-blue-500 text-white px-4 py-2 rounded"
-            >
-              Create Firebase Project
-            </button>
-          </div>
-
-          {/* Button to download firebase.js */}
-          <div className="flex justify-center">
-            <button
-              onClick={downloadFirebaseConfig}
-              className="bg-blue-500 text-white px-4 py-2 rounded"
-            >
-              Download Firebase.js
-            </button>
-          </div>
-        </article>
-      </section>
+      {/* Button to download firebase.js */}
+      <div className="flex justify-center">
+        <button
+          onClick={downloadFirebaseConfig}
+          className="bg-blue-500 text-white px-4 py-2 rounded"
+        >
+          Download Firebase.js
+        </button>
+      </div>
 
       <LoggedUser />
     </main>
