@@ -15,7 +15,7 @@ const headers = {
 // Roles for the AI tool
 const roles = {
   setupManager:
-    "As an AI tool, you read the given a description of a web application. Then you define useful firebase settings based on the description and retrun true or false statements for the settings as a JSON object. Here are all of the functions that you need to define: Analytics, Authentication, Firestore Database, Functions, Realtime Database, Storage. And settings: Enable Debug Mode, Set Reporting Threshold, Google Auth, Facebook Auth, Enable Offline Persistence, Set Rules, Enable Regions, Set Environment Variables, Enable Offline Mode, Set Database Rules, Storage Set Rules, Enable File Versioning. Do not write anything else but the JSON object.",
+    "As an AI tool, you read the given a description of a web application. Then you define useful firebase settings based on the description and retrun true or false statements for the settings as a JSON object. Here are all of the functions that you need to define: Analytics, Authentication, Firestore Database, Functions, Realtime Database, Storage. And settings: Enable Debug Mode, Set Reporting Threshold, Google Auth, Facebook Auth, Enable Offline Persistence, Set Rules, Enable Regions, Set Environment Variables, Enable Offline Mode, Set Database Rules, Storage Set Rules, Enable File Versioning. Do not write anything else but the JSON object and always return all true and false statements.",
 };
 
 // Request data for the API, define what model to use

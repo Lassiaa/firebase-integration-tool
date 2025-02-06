@@ -101,7 +101,7 @@ const ToolPage = () => {
     },
   };
 
-  const downloadFirebaseConfig = () => {
+  const downloadFirebaseConfig = (firebaseConfig) => {
     const imports = [`import { initializeApp } from "firebase/app";`];
     const initializations = [`const app = initializeApp(firebaseConfig);`];
     const exports = ["app"];
@@ -123,15 +123,7 @@ const ToolPage = () => {
 ${imports.join("\n")}
   
 // Firebase configuration
-const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "Testi.firebaseapp.com",
-  projectId: "Testi",
-  storageBucket: "Testi.appspot.com",
-  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-  appId: "YOUR_APP_ID",
-  measurementId: "YOUR_MEASUREMENT_ID",
-};
+const firebaseConfig = ${JSON.stringify(firebaseConfig, null, 2)};
     
 // Firebase initialization
 ${initializations.join("\n")}
@@ -169,6 +161,8 @@ export { ${exports.join(", ")} };
     });
   };
 
+  const currentProject = localStorage.getItem("projectName");
+
   const manualSetupSelection = () => {
     setManualSetup(!isManualSetup);
   };
@@ -184,9 +178,10 @@ export { ${exports.join(", ")} };
 
   return (
     <main className="w-full px-2">
-      <h1 className="text-center text-3xl font-bold my-8">
+      <h1 className="text-center text-3xl font-bold mt-8">
         Firebase Integration Tool
       </h1>
+      <h2 className="text-center text-2xl font-bold mb-8">{currentProject}</h2>
 
       <section>
         <AISetup

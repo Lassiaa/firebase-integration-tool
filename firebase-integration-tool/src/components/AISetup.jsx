@@ -97,8 +97,9 @@ const AISetup = ({ setSelectedFeatures, setSelectedSettings }) => {
             Storage: aiResponseParsed["Storage"]
               ? settingKeys.filter(
                   (key) =>
-                    ["Enable File Versioning"].includes(key) &&
-                    aiResponseParsed[key]
+                    ["Storage Set Rules", "Enable File Versioning"].includes(
+                      key
+                    ) && aiResponseParsed[key]
                 )
               : [],
           };

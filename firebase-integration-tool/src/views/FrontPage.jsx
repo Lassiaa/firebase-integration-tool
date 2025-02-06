@@ -1,39 +1,29 @@
 import { useNavigate } from "react-router-dom";
-import { GoogleAuthProvider, getAuth, signInWithPopup } from "firebase/auth";
-import app from "../utils/firebase";
+import { signInWithPopup, GoogleAuthProvider } from "firebase/auth";
+import { auth } from "../utils/firebase";
 
 const FrontPage = () => {
-  const navigate = useNavigate(app);
+  const navigate = useNavigate();
+  const provider = new GoogleAuthProvider();
+  provider.addScope("https://www.googleapis.com/auth/cloud-platform");
 
   const logGoogleUser = async () => {
     try {
-      const auth = getAuth();
-      const provider = new GoogleAuthProvider();
+      const result = await signInWithPopup(auth, provider);
+      const user = result.user;
+      const credential = GoogleAuthProvider.credentialFromResult(result);
 
-      provider.setCustomParameters({
-        client_id: import.meta.env.VITE_FIREBASE_OAUTH_CLIENT_ID,
-      });
+      if (credential) {
+        const accessToken = credential.accessToken;
 
-      const response = await signInWithPopup(auth, provider);
+        localStorage.setItem("accessToken", accessToken);
+        localStorage.setItem("idToken", await user.getIdToken());
 
-      if (response) {
-        console.log("User signed in:", response);
-
-        const user = response.user;
-        const idToken = await user.getIdToken();
-
-        console.log("OAuth ID (Google ID):", user.uid);
-        console.log("Firebase ID Token:", idToken);
-        localStorage.setItem("idToken", idToken);
-
+        console.log("OAuth Token:", accessToken);
         navigate("/project");
       }
     } catch (error) {
-      if (error.code === "auth/popup-closed-by-user") {
-        console.warn("Popup closed before completing sign-in.");
-      } else {
-        console.error("Error signing in:", error.message);
-      }
+      console.error("Error during login:", error);
     }
   };
 
@@ -71,7 +61,7 @@ const FrontPage = () => {
                 d="M488 261.8C488 403.3 391.1 504 248 504 110.8 504 0 393.2 0 256S110.8 8 248 8c66.8 0 123 24.5 166.3 64.9l-67.5 64.9C258.5 52.6 94.3 116.6 94.3 256c0 86.5 69.1 156.6 153.7 156.6 98.2 0 135-70.4 140.8-106.9H248v-85.3h236.1c2.3 12.7 3.9 24.9 3.9 41.4z"
               ></path>
             </svg>
-            Sign up with Google
+            Sign in with Google
           </button>
         </div>
       </section>
