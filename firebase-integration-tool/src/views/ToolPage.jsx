@@ -165,24 +165,20 @@ const ToolPage = () => {
     link.click();
   };
 
+  // Call the backend to fetch Firebase config
   const fetchFirebaseConfig = async () => {
     setLoading(true);
 
     const projectId = localStorage.getItem("projectId");
-    const webAppId = localStorage.getItem("webAppId");
     const accessToken = localStorage.getItem("accessToken");
 
-    console.log("projectId:", projectId);
-    console.log("webAppId:", webAppId);
-    console.log("accessToken:", accessToken);
-
-    if (!projectId || !webAppId || !accessToken) {
-      alert("App ID, Web App ID, or access token is missing.");
+    if (!projectId || !accessToken) {
+      alert("Project ID or access token is missing.");
       setLoading(false);
       return;
     }
 
-    // Request to backend to fetch the Firebase config
+    // Request to backend to fetch Firebase config
     try {
       const response = await fetch(
         import.meta.env.VITE_FIREBASE_FETCH_FUNCTION,
@@ -194,15 +190,12 @@ const ToolPage = () => {
           },
           body: JSON.stringify({
             projectId,
-            webAppId,
           }),
         }
       );
 
       const data = await response.json();
-      console.log("Response data:", data);
 
-      // If success, call the download function with the received config
       if (response.ok && data.success) {
         downloadFirebaseConfig(data.firebaseConfig);
       } else {
@@ -345,7 +338,7 @@ const ToolPage = () => {
       </section>
 
       {/* Button to download firebase.js */}
-      <div className="flex justify-center">
+      <div className="flex justify-center mb-20">
         <button
           onClick={fetchFirebaseConfig}
           className="bg-blue-500 text-white px-4 py-2 rounded"
@@ -355,7 +348,7 @@ const ToolPage = () => {
         </button>
 
         {loading && (
-          <div className="flex justify-center mt-4">
+          <div className="flex flex-col items-center justify-center mt-8">
             <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
           </div>
         )}

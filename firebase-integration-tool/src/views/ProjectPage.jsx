@@ -6,7 +6,7 @@ import LoggedUser from "../components/LoggedUser";
 const ProjectPage = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
-  const [timeLeft, setTimeLeft] = useState(50);
+  const [timeLeft, setTimeLeft] = useState(45);
   const [projectName, setProjectName] = useState(
     localStorage.getItem("projectName") || ""
   );
@@ -17,6 +17,7 @@ const ProjectPage = () => {
     }
   }, [projectName]);
 
+  // Call the backend to create a Firebase project
   const createFirebaseProject = async () => {
     if (!projectName) {
       alert("Please provide a Firebase project name!");
@@ -56,7 +57,6 @@ const ProjectPage = () => {
       if (data.success) {
         console.log("Response JSON:", data);
         localStorage.setItem("projectId", data.firebaseProjectId);
-        localStorage.setItem("webAppId", data.webAppId);
         navigate("/tool");
       } else {
         alert(`Error: ${data.message || "Unknown error"}`);
@@ -116,7 +116,7 @@ const ProjectPage = () => {
           </div>
 
           {loading && (
-            <div className="flex-col justify-center mt-8">
+            <div className="flex flex-col items-center justify-center mt-8">
               <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
               <p className="text-center mt-4" id="timer">
                 {timeLeft > 0

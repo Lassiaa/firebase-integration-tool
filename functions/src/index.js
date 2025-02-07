@@ -148,17 +148,11 @@ exports.createFirebaseProject = functions.https.onRequest((req, res) => {
       if (registerWebAppResponse.ok) {
         const webAppData = await registerWebAppResponse.json();
         console.log("Full webAppData:", webAppData);
-
-        const appId = webAppData.name.split("/").pop();
-        console.log("Web app ID:", appId);
-
-        await new Promise((resolve) => setTimeout(resolve, 20000));
-
+        await new Promise((resolve) => setTimeout(resolve, 10000));
         return res.json({
           success: true,
           message: "Firebase project and web app created successfully",
           firebaseProjectId: projectId,
-          webAppId: appId,
         });
       } else {
         const errorText = await registerWebAppResponse.text();
@@ -189,15 +183,13 @@ exports.fetchConfig = functions.https.onRequest((req, res) => {
 
     // Fetch the Firebase web app config
     try {
-      const { projectId, webAppId } = req.body;
-      console.log(
-        `Fetching config for project: ${projectId}, webAppId: ${webAppId}`
-      );
+      const { projectId } = req.body;
+      console.log(`Fetching config for project: ${projectId}`);
 
-      if (!projectId || !webAppId) {
+      if (!projectId) {
         return res
           .status(400)
-          .json({ success: false, message: "Missing parameters" });
+          .json({ success: false, message: "Missing projectId" });
       }
 
       // Extract the Bearer token from the Authorization header
@@ -212,16 +204,37 @@ exports.fetchConfig = functions.https.onRequest((req, res) => {
           .json({ success: false, message: "Missing access token" });
       }
 
-      const encodedProjectId = encodeURIComponent(projectId);
-      const encodedWebAppId = encodeURIComponent(webAppId);
-
-      console.log(
-        "Request URL:",
-        `${FIREBASE_API_URL}/${encodedProjectId}/webApps/${encodedWebAppId}/config`
+      // Get the web app ID from the list of web apps
+      const listAppsResponse = await fetch(
+        `${FIREBASE_API_URL}/${projectId}/webApps`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
       );
 
+      if (!listAppsResponse.ok) {
+        const errorText = await listAppsResponse.text();
+        console.log("Failed to list web apps:", errorText);
+        return res.status(500).json({
+          success: false,
+          message: "Error listing web apps",
+          details: errorText,
+        });
+      }
+
+      const appsData = await listAppsResponse.json();
+      console.log("List of web apps:", appsData);
+
+      const appId = appsData.apps[0].appId;
+      console.log("App ID from list:", appId);
+
+      // Now fetch the config using the web app ID
       const firebaseConfigResponse = await fetch(
-        `${FIREBASE_API_URL}/${encodedProjectId}/webApps/${encodedWebAppId}/config`,
+        `${FIREBASE_API_URL}/${projectId}/webApps/${appId}/config`,
         {
           headers: { Authorization: `Bearer ${accessToken}` },
         }
