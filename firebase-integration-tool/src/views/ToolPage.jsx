@@ -5,6 +5,7 @@ import LoggedUser from "../components/LoggedUser";
 import AISetup from "../components/AISetup";
 
 const ToolPage = () => {
+  const [loading, setLoading] = useState(false);
   const [isManualSetup, setManualSetup] = useState(false);
 
   const [selectedFeatures, setSelectedFeatures] = useState(() => {
@@ -45,6 +46,31 @@ const ToolPage = () => {
     localStorage.setItem("selectedSettings", JSON.stringify(selectedSettings));
   }, [selectedSettings]);
 
+  // Toggle the selected features in Manual Setup
+  const toggleFeature = (feature) => {
+    setSelectedFeatures((prevState) => {
+      const newState = { ...prevState, [feature]: !prevState[feature] };
+      return newState;
+    });
+  };
+
+  // Toggle additional setting for a feature
+  const toggleSetting = (feature, setting) => {
+    setSelectedSettings((prevSettings) => {
+      const updatedSettings = { ...prevSettings };
+      const featureSettings = updatedSettings[feature] || [];
+
+      if (featureSettings.includes(setting)) {
+        updatedSettings[feature] = featureSettings.filter((s) => s !== setting);
+      } else {
+        updatedSettings[feature] = [...featureSettings, setting];
+      }
+
+      return updatedSettings;
+    });
+  };
+
+  // Feature configurations for Firebase
   const featureConfigs = {
     Analytics: {
       import: `import { getAnalytics } from "firebase/analytics";`,
@@ -101,6 +127,7 @@ const ToolPage = () => {
     },
   };
 
+  // Download the firebase.js file
   const downloadFirebaseConfig = (firebaseConfig) => {
     const imports = [`import { initializeApp } from "firebase/app";`];
     const initializations = [`const app = initializeApp(firebaseConfig);`];
@@ -120,16 +147,16 @@ const ToolPage = () => {
     });
 
     const fileContent = `
-${imports.join("\n")}
-  
-// Firebase configuration
-const firebaseConfig = ${JSON.stringify(firebaseConfig, null, 2)};
+  ${imports.join("\n")}
     
-// Firebase initialization
-${initializations.join("\n")}
-  
-export { ${exports.join(", ")} };
-`;
+  // Firebase configuration
+  const firebaseConfig = ${JSON.stringify(firebaseConfig, null, 2)};
+      
+  // Firebase initialization
+  ${initializations.join("\n")}
+    
+  export { ${exports.join(", ")} };
+  `;
 
     const blob = new Blob([fileContent], { type: "application/javascript" });
     const link = document.createElement("a");
@@ -138,27 +165,59 @@ export { ${exports.join(", ")} };
     link.click();
   };
 
-  // Toggle the selected features in Manual Setup
-  const toggleFeature = (feature) => {
-    setSelectedFeatures((prevState) => {
-      const newState = { ...prevState, [feature]: !prevState[feature] };
-      return newState;
-    });
-  };
-  // Toggle additional setting for a feature
-  const toggleSetting = (feature, setting) => {
-    setSelectedSettings((prevSettings) => {
-      const updatedSettings = { ...prevSettings };
-      const featureSettings = updatedSettings[feature] || [];
+  const fetchFirebaseConfig = async () => {
+    setLoading(true);
 
-      if (featureSettings.includes(setting)) {
-        updatedSettings[feature] = featureSettings.filter((s) => s !== setting);
+    const projectId = localStorage.getItem("projectId");
+    const webAppId = localStorage.getItem("webAppId");
+    const accessToken = localStorage.getItem("accessToken");
+
+    console.log("projectId:", projectId);
+    console.log("webAppId:", webAppId);
+    console.log("accessToken:", accessToken);
+
+    if (!projectId || !webAppId || !accessToken) {
+      alert("App ID, Web App ID, or access token is missing.");
+      setLoading(false);
+      return;
+    }
+
+    // Request to backend to fetch the Firebase config
+    try {
+      const response = await fetch(
+        import.meta.env.VITE_FIREBASE_FETCH_FUNCTION,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
+          },
+          body: JSON.stringify({
+            projectId,
+            webAppId,
+          }),
+        }
+      );
+
+      const data = await response.json();
+      console.log("Response data:", data);
+
+      // If success, call the download function with the received config
+      if (response.ok && data.success) {
+        downloadFirebaseConfig(data.firebaseConfig);
       } else {
-        updatedSettings[feature] = [...featureSettings, setting];
+        throw new Error(data.message || "Failed to fetch Firebase config");
       }
-
-      return updatedSettings;
-    });
+    } catch (error) {
+      console.error("Error:", error);
+      alert(
+        `An error occurred: ${
+          error.message || "Unable to fetch Firebase config"
+        }`
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   const currentProject = localStorage.getItem("projectName");
@@ -288,11 +347,18 @@ export { ${exports.join(", ")} };
       {/* Button to download firebase.js */}
       <div className="flex justify-center">
         <button
-          onClick={downloadFirebaseConfig}
+          onClick={fetchFirebaseConfig}
           className="bg-blue-500 text-white px-4 py-2 rounded"
+          disabled={loading}
         >
           Download Firebase.js
         </button>
+
+        {loading && (
+          <div className="flex justify-center mt-4">
+            <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+          </div>
+        )}
       </div>
 
       <LoggedUser />

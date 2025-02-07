@@ -6,20 +6,16 @@ const FrontPage = () => {
   const navigate = useNavigate();
   const provider = new GoogleAuthProvider();
   provider.addScope("https://www.googleapis.com/auth/cloud-platform");
+  provider.addScope("https://www.googleapis.com/auth/firebase");
 
   const logGoogleUser = async () => {
     try {
       const result = await signInWithPopup(auth, provider);
-      const user = result.user;
       const credential = GoogleAuthProvider.credentialFromResult(result);
 
       if (credential) {
         const accessToken = credential.accessToken;
-
         localStorage.setItem("accessToken", accessToken);
-        localStorage.setItem("idToken", await user.getIdToken());
-
-        console.log("OAuth Token:", accessToken);
         navigate("/project");
       }
     } catch (error) {

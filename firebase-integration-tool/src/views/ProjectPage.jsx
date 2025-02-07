@@ -5,11 +5,11 @@ import LoggedUser from "../components/LoggedUser";
 
 const ProjectPage = () => {
   const navigate = useNavigate();
-
-  const [projectName, setprojectName] = useState(
+  const [loading, setLoading] = useState(false);
+  const [timeLeft, setTimeLeft] = useState(50);
+  const [projectName, setProjectName] = useState(
     localStorage.getItem("projectName") || ""
   );
-  // const [firebaseConfig, setFirebaseConfig] = useState(null);
 
   useEffect(() => {
     if (projectName) {
@@ -26,9 +26,11 @@ const ProjectPage = () => {
     const accessToken = localStorage.getItem("accessToken");
 
     if (!accessToken) {
-      alert("Access token is missing. Please sign in again.");
+      alert("Please sign in again.");
       return;
     }
+
+    setLoading(true);
 
     try {
       const response = await fetch(
@@ -37,25 +39,52 @@ const ProjectPage = () => {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
           },
+
           body: JSON.stringify({ projectName, accessToken }),
         }
       );
 
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+
       const data = await response.json();
+      console.log(data);
 
       if (data.success) {
-        alert("Firebase project created successfully!");
-        // setFirebaseConfig(data.firebaseConfig);
+        console.log("Response JSON:", data);
+        localStorage.setItem("projectId", data.firebaseProjectId);
+        localStorage.setItem("webAppId", data.webAppId);
         navigate("/tool");
       } else {
-        alert(`Error: ${data.message}`);
+        alert(`Error: ${data.message || "Unknown error"}`);
       }
     } catch (error) {
       console.error("Error:", error);
-      alert("An unexpected error occurred.");
+      alert("An unexpected error occurred. Please try again later.");
+    } finally {
+      setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (!loading) {
+      return;
+    }
+    const countdown = setInterval(() => {
+      setTimeLeft((prevTime) => {
+        if (prevTime <= 1) {
+          clearInterval(countdown);
+          return 0;
+        }
+        return prevTime - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(countdown);
+  }, [loading]);
 
   return (
     <div>
@@ -72,7 +101,7 @@ const ProjectPage = () => {
               type="text"
               placeholder="Firebase project..."
               value={projectName}
-              onChange={(e) => setprojectName(e.target.value)}
+              onChange={(e) => setProjectName(e.target.value)}
             />
           </div>
 
@@ -80,27 +109,22 @@ const ProjectPage = () => {
             <button
               onClick={createFirebaseProject}
               className="bg-blue-500 text-white px-4 py-2 rounded"
+              disabled={loading}
             >
               Create Firebase Project
             </button>
           </div>
 
-          {/*
-          {firebaseConfig && (
-            <div className="mt-4 p-4 border rounded bg-gray-100 text-black">
-              <h3 className="text-lg font-bold">Firebase Config</h3>
-              <pre className="text-sm">
-                {JSON.stringify(firebaseConfig, null, 2)}
-              </pre>
-
-              <button
-                onClick={() => navigate("/tool")}
-                className="mt-4 bg-green-500 text-white px-4 py-2 rounded"
-              >
-                Continue
-              </button>
+          {loading && (
+            <div className="flex-col justify-center mt-8">
+              <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+              <p className="text-center mt-4" id="timer">
+                {timeLeft > 0
+                  ? `Estimated time: ${timeLeft}s`
+                  : "Finishing up!"}
+              </p>
             </div>
-          )}*/}
+          )}
         </article>
       </section>
 

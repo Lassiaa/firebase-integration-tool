@@ -8,4 +8,4 @@ The idea behind the application is to automate / make it easier to integrate a F
 
 ### Stack
 
-Vite, React, JavaScript, Tailwind CSS, Cloud Firestore/Firebase, OpenAI
+Vite, React, JavaScript, Tailwind CSS, OpenAI, Cloud Firebase, Firestore and Firebase Functions
