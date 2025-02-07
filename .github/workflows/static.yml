@@ -30,9 +30,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3
       - name: Setup Pages
-        uses: actions/configure-pages@v4
+        uses: actions/configure-pages@v3
       - name: Install dependencies
         run: npm ci
         working-directory: ./firebase-integration-tool
@@ -42,10 +42,10 @@ jobs:
           VITE_FIREBASE_API_KEY: ${{ secrets.VITE_OPENAI_API_KEY }}
         working-directory: ./firebase-integration-tool
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v2
+        uses: actions/upload-pages-artifact@v3
         with:
           # Upload entire repository
           path: "./firebase-integration-tool/dist"
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v2
+        uses: actions/deploy-pages@v3
