@@ -1,19 +1,25 @@
 import { useNavigate } from "react-router-dom";
-import { signInWithGooglePopup } from "../utils/firebase";
+import { signInWithPopup, GoogleAuthProvider } from "firebase/auth";
+import { auth } from "../utils/firebase";
 
 const FrontPage = () => {
   const navigate = useNavigate();
+  const provider = new GoogleAuthProvider();
+  provider.addScope("https://www.googleapis.com/auth/cloud-platform");
+  provider.addScope("https://www.googleapis.com/auth/firebase");
 
-  // Import the signInWithGooglePopup function from the firebase.js file
   const logGoogleUser = async () => {
     try {
-      const response = await signInWithGooglePopup();
-      if (response) {
-        console.log("User signed in: ", response);
-        navigate("/tool");
+      const result = await signInWithPopup(auth, provider);
+      const credential = GoogleAuthProvider.credentialFromResult(result);
+
+      if (credential) {
+        const accessToken = credential.accessToken;
+        localStorage.setItem("accessToken", accessToken);
+        navigate("/project");
       }
     } catch (error) {
-      console.error("Error signing in:", error);
+      console.error("Error during login:", error);
     }
   };
 
@@ -51,7 +57,7 @@ const FrontPage = () => {
                 d="M488 261.8C488 403.3 391.1 504 248 504 110.8 504 0 393.2 0 256S110.8 8 248 8c66.8 0 123 24.5 166.3 64.9l-67.5 64.9C258.5 52.6 94.3 116.6 94.3 256c0 86.5 69.1 156.6 153.7 156.6 98.2 0 135-70.4 140.8-106.9H248v-85.3h236.1c2.3 12.7 3.9 24.9 3.9 41.4z"
               ></path>
             </svg>
-            Sign up with Google<div></div>
+            Sign in with Google
           </button>
         </div>
       </section>

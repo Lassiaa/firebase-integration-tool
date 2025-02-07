@@ -2,7 +2,7 @@
 import { initializeApp } from "firebase/app";
 // import { getAnalytics } from "firebase/analytics";
 import { getFirestore } from "firebase/firestore";
-import { getAuth, signInWithPopup, GoogleAuthProvider } from "firebase/auth";
+import { getAuth, GoogleAuthProvider } from "firebase/auth";
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
@@ -22,13 +22,6 @@ const db = getFirestore(app);
 
 // Initialize Firebase Auth provider
 const provider = new GoogleAuthProvider();
+const auth = getAuth(app);
 
-// whenever a user interacts with the provider, we force them to select an account
-provider.setCustomParameters({
-  prompt: "select_account ",
-});
-
-export const auth = getAuth();
-export const signInWithGooglePopup = () => signInWithPopup(auth, provider);
-
-export default db;
+export { auth, provider, db };
