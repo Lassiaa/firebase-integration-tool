@@ -6,7 +6,7 @@ import LoggedUser from "../components/LoggedUser";
 const ProjectPage = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
-  const [timeLeft, setTimeLeft] = useState(45);
+  const [timeLeft, setTimeLeft] = useState(25);
   const [projectName, setProjectName] = useState(
     localStorage.getItem("projectName") || ""
   );

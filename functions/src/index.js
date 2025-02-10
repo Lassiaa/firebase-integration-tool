@@ -1,3 +1,4 @@
+/* eslint-disable linebreak-style */
 /* eslint-disable max-len */
 /* eslint-disable operator-linebreak */
 /* eslint-disable quote-props */
@@ -41,9 +42,17 @@ exports.createFirebaseProject = functions.https.onRequest((req, res) => {
           .json({ success: false, message: "Missing parameters" });
       }
 
-      // Generate a unique project ID
-      const generateUniqueProjectId = (name) =>
-        `${name.toLowerCase().replace(/\s+/g, "-")}-${Date.now()}`;
+      // Generate a unique project ID that can not be longer than 30 characters
+      const generateUniqueProjectId = (name) => {
+        const baseProjectId = name.toLowerCase().replace(/\s+/g, "-");
+
+        if (baseProjectId.length >= 30) {
+          return baseProjectId.substring(0, 30);
+        }
+
+        return `${baseProjectId}-${Date.now()}`.substring(0, 30);
+      };
+
       const projectId = generateUniqueProjectId(projectName);
       console.log("Generated projectId:", projectId);
 
@@ -70,6 +79,7 @@ exports.createFirebaseProject = functions.https.onRequest((req, res) => {
       }
 
       console.log("Project created, checking status...");
+      await new Promise((resolve) => setTimeout(resolve, 5000));
 
       // Check the status of the project
       const checkProjectStatus = async () => {
@@ -102,67 +112,103 @@ exports.createFirebaseProject = functions.https.onRequest((req, res) => {
       console.log("Enabling Firebase services...");
 
       // Enable Firebase services
-      const enableFirebaseResponse = await fetch(
-        `${FIREBASE_API_URL}/${projectId}:addFirebase`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${accessToken}`,
-          },
-        }
-      );
+      const enableFirebase = async () => {
+        for (let attempt = 0; attempt < 5; attempt++) {
+          try {
+            const enableFirebaseResponse = await fetch(
+              `${FIREBASE_API_URL}/${projectId}:addFirebase`,
+              {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${accessToken}`,
+                },
+              }
+            );
 
-      if (!enableFirebaseResponse.ok) {
-        const errorData = await enableFirebaseResponse.json();
-        console.log("Failed to enable Firebase:", errorData);
+            if (enableFirebaseResponse.ok) {
+              console.log("Firebase services enabled successfully.");
+              return;
+            } else {
+              const errorData = await enableFirebaseResponse.json();
+              console.log("Failed to enable Firebase:", errorData);
+            }
+          } catch (error) {
+            console.error("Error enabling Firebase services:", error);
+          }
+
+          await new Promise((resolve) => setTimeout(resolve, 2000));
+        }
+
+        console.log(
+          "Failed to enable Firebase services after multiple attempts."
+        );
         return res.status(500).json({
           success: false,
-          message:
-            errorData.error && errorData.error.message
-              ? errorData.error.message
-              : "Failed to enable Firebase services",
+          message: "Failed to enable Firebase services after multiple attempts",
         });
-      }
+      };
+
+      await enableFirebase();
 
       console.log("Waiting for Firebase to initialize...");
       await new Promise((resolve) => setTimeout(resolve, 10000));
 
       // Register the web app
       console.log("Registering web app...");
-      const registerWebAppResponse = await fetch(
-        `${FIREBASE_API_URL}/${projectId}/webApps`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${accessToken}`,
-          },
-          body: JSON.stringify({ displayName: projectName }),
+      const registerWebApp = async () => {
+        for (let attempt = 0; attempt < 5; attempt++) {
+          try {
+            const registerWebAppResponse = await fetch(
+              `${FIREBASE_API_URL}/${projectId}/webApps`,
+              {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${accessToken}`,
+                },
+                body: JSON.stringify({ displayName: projectName }),
+              }
+            );
+
+            if (registerWebAppResponse.ok) {
+              const webAppData = await registerWebAppResponse.json();
+              console.log("Full webAppData:", webAppData);
+              return res.json({
+                success: true,
+                message: "Firebase project and web app created successfully",
+                firebaseProjectId: projectId,
+              });
+            } else {
+              const errorText = await registerWebAppResponse.text();
+              console.log("Failed to register web app:", errorText);
+
+              if (registerWebAppResponse.status === 404) {
+                console.log("Retrying web app registration...");
+                await new Promise((resolve) => setTimeout(resolve, 5000));
+              } else {
+                return res.status(500).json({
+                  success: false,
+                  message: "Error registering web app",
+                  details: errorText,
+                });
+              }
+            }
+          } catch (error) {
+            console.error("Error registering web app:", error);
+            await new Promise((resolve) => setTimeout(resolve, 5000));
+          }
         }
-      );
+        return res.status(500).json({
+          success: false,
+          message: "Failed to register web app after multiple attempts",
+        });
+      };
+
+      await registerWebApp();
 
       // Wait a bit for the web app to register
       await new Promise((resolve) => setTimeout(resolve, 5000));
-
-      if (registerWebAppResponse.ok) {
-        const webAppData = await registerWebAppResponse.json();
-        console.log("Full webAppData:", webAppData);
-        await new Promise((resolve) => setTimeout(resolve, 10000));
-        return res.json({
-          success: true,
-          message: "Firebase project and web app created successfully",
-          firebaseProjectId: projectId,
-        });
-      } else {
-        const errorText = await registerWebAppResponse.text();
-        console.log("Failed to register web app:", errorText);
-        return res.status(500).json({
-          success: false,
-          message: "Error registering web app",
-          details: errorText,
-        });
-      }
     } catch (error) {
       console.error("Error creating Firebase project:", error);
       return res

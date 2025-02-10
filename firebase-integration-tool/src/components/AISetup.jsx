@@ -26,8 +26,11 @@ const AISetup = ({ setSelectedFeatures, setSelectedSettings }) => {
           const featureKeys = [
             "Analytics",
             "Authentication",
+            "Firebase Performance Monitoring",
+            "Firebase Remote Config",
             "Firestore Database",
             "Functions",
+            "Messaging",
             "Realtime Database",
             "Storage",
           ];
@@ -36,15 +39,15 @@ const AISetup = ({ setSelectedFeatures, setSelectedSettings }) => {
           const settingKeys = [
             "Enable Debug Mode",
             "Set Reporting Threshold",
-            "Google Auth",
+            "Apple Auth",
             "Facebook Auth",
+            "GitHub Auth",
+            "Google Auth",
+            "Set Config Parameters",
             "Enable Offline Persistence",
-            "Set Rules",
             "Enable Regions",
             "Set Environment Variables",
             "Enable Offline Mode",
-            "Set Database Rules",
-            "Storage Set Rules",
             "Enable File Versioning",
           ];
 
@@ -67,14 +70,25 @@ const AISetup = ({ setSelectedFeatures, setSelectedSettings }) => {
             Authentication: aiResponseParsed["Authentication"]
               ? settingKeys.filter(
                   (key) =>
-                    ["Google Auth", "Facebook Auth"].includes(key) &&
+                    [
+                      "Apple Auth",
+                      "Facebook Auth",
+                      "GitHub Auth",
+                      "Google Auth",
+                    ].includes(key) && aiResponseParsed[key]
+                )
+              : [],
+            "Firebase Remote Config": aiResponseParsed["Firebase Remote Config"]
+              ? settingKeys.filter(
+                  (key) =>
+                    ["Set Config Parameters"].includes(key) &&
                     aiResponseParsed[key]
                 )
               : [],
             "Firestore Database": aiResponseParsed["Firestore Database"]
               ? settingKeys.filter(
                   (key) =>
-                    ["Enable Offline Persistence", "Set Rules"].includes(key) &&
+                    ["Enable Offline Persistence"].includes(key) &&
                     aiResponseParsed[key]
                 )
               : [],
@@ -89,17 +103,15 @@ const AISetup = ({ setSelectedFeatures, setSelectedSettings }) => {
             "Realtime Database": aiResponseParsed["Realtime Database"]
               ? settingKeys.filter(
                   (key) =>
-                    ["Enable Offline Mode", "Set Database Rules"].includes(
-                      key
-                    ) && aiResponseParsed[key]
+                    ["Enable Offline Mode"].includes(key) &&
+                    aiResponseParsed[key]
                 )
               : [],
             Storage: aiResponseParsed["Storage"]
               ? settingKeys.filter(
                   (key) =>
-                    ["Storage Set Rules", "Enable File Versioning"].includes(
-                      key
-                    ) && aiResponseParsed[key]
+                    ["Enable File Versioning"].includes(key) &&
+                    aiResponseParsed[key]
                 )
               : [],
           };

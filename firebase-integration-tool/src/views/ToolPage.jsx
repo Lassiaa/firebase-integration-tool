@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
-// import { auth } from "../utils/firebase";
 
 import LoggedUser from "../components/LoggedUser";
 import AISetup from "../components/AISetup";
+import Download from "../components/Download";
 
 const ToolPage = () => {
-  const [loading, setLoading] = useState(false);
+  const currentProject = localStorage.getItem("projectName");
   const [isManualSetup, setManualSetup] = useState(false);
 
   const [selectedFeatures, setSelectedFeatures] = useState(() => {
@@ -16,8 +16,11 @@ const ToolPage = () => {
       : {
           Analytics: false,
           Authentication: false,
+          "Firebase Performance Monitoring": false,
+          "Firebase Remote Config": false,
           "Firestore Database": false,
           Functions: false,
+          Messaging: false,
           "Realtime Database": false,
           Storage: false,
         };
@@ -31,8 +34,11 @@ const ToolPage = () => {
       : {
           Analytics: [],
           Authentication: [],
+          "Firebase Performance Monitoring": [],
+          "Firebase Remote Config": [],
           "Firestore Database": [],
           Functions: [],
+          Messaging: [],
           "Realtime Database": [],
           Storage: [],
         };
@@ -45,6 +51,23 @@ const ToolPage = () => {
   useEffect(() => {
     localStorage.setItem("selectedSettings", JSON.stringify(selectedSettings));
   }, [selectedSettings]);
+
+  const additionalSettings = {
+    Analytics: ["Enable Debug Mode", "Set Reporting Threshold"],
+    Authentication: [
+      "Apple Auth",
+      "Facebook Auth",
+      "GitHub Auth",
+      "Google Auth",
+    ],
+    "Firebase Performance Monitoring": [],
+    "Firebase Remote Config": ["Set Config Parameters"],
+    "Firestore Database": ["Enable Offline Persistence"],
+    Functions: ["Enable Regions", "Set Environment Variables"],
+    Messaging: [],
+    "Realtime Database": ["Enable Offline Mode"],
+    Storage: ["Enable File Versioning"],
+  };
 
   // Toggle the selected features in Manual Setup
   const toggleFeature = (feature) => {
@@ -70,162 +93,8 @@ const ToolPage = () => {
     });
   };
 
-  // Feature configurations for Firebase
-  const featureConfigs = {
-    Analytics: {
-      import: `import { getAnalytics } from "firebase/analytics";`,
-      init: `const analytics = getAnalytics(app);`,
-      settings: {
-        "Enable Debug Mode": `analytics.setAnalyticsCollectionEnabled(true);`,
-        "Set Reporting Threshold": `analytics.setReportMode(2);`,
-      },
-      export: "analytics",
-    },
-    Authentication: {
-      import: `import { getAuth, GoogleAuthProvider } from "firebase/auth";`,
-      init: `const auth = getAuth(app);`,
-      settings: {
-        "Google Auth": `const provider = new GoogleAuthProvider();`,
-        "Facebook Auth": `const provider = new FacebookAuthProvider();`,
-      },
-      export: "auth, provider",
-    },
-    "Firestore Database": {
-      import: `import { getFirestore } from "firebase/firestore";`,
-      init: `const firestore = getFirestore(app);`,
-      settings: {
-        "Enable Offline Persistence": `firestore.enablePersistence();`,
-        "Set Rules": `firestore.setRules({/* Custom rules here */});`,
-      },
-      export: "firestore",
-    },
-    Functions: {
-      import: `import { getFunctions } from "firebase/functions";`,
-      init: `const functions = getFunctions(app);`,
-      settings: {
-        "Enable Regions": `functions.useFunctionsEmulator("localhost", 5001);`,
-      },
-      export: "functions",
-    },
-    "Realtime Database": {
-      import: `import { getDatabase } from "firebase/database";`,
-      init: `const database = getDatabase(app);`,
-      settings: {
-        "Enable Offline Mode": `database.goOffline();`,
-        "Set Database Rules": `database.setRules({/* Custom rules here */});`,
-      },
-      export: "database",
-    },
-    Storage: {
-      import: `import { getStorage } from "firebase/storage";`,
-      init: `const storage = getStorage(app);`,
-      settings: {
-        "Enable File Versioning": `storage.enableVersioning();`,
-        "Storage Set Rules": `storage.setRules({/* Custom rules here */});`,
-      },
-      export: "storage",
-    },
-  };
-
-  // Download the firebase.js file
-  const downloadFirebaseConfig = (firebaseConfig) => {
-    const imports = [`import { initializeApp } from "firebase/app";`];
-    const initializations = [`const app = initializeApp(firebaseConfig);`];
-    const exports = ["app"];
-
-    Object.entries(featureConfigs).forEach(([feature, config]) => {
-      if (selectedFeatures[feature]) {
-        imports.push(config.import);
-        initializations.push(config.init);
-        exports.push(...config.export.split(", "));
-        Object.entries(config.settings).forEach(([setting, code]) => {
-          if (selectedSettings[feature]?.includes(setting)) {
-            initializations.push(code);
-          }
-        });
-      }
-    });
-
-    const fileContent = `
-  ${imports.join("\n")}
-    
-  // Firebase configuration
-  const firebaseConfig = ${JSON.stringify(firebaseConfig, null, 2)};
-      
-  // Firebase initialization
-  ${initializations.join("\n")}
-    
-  export { ${exports.join(", ")} };
-  `;
-
-    const blob = new Blob([fileContent], { type: "application/javascript" });
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = "firebase.js";
-    link.click();
-  };
-
-  // Call the backend to fetch Firebase config
-  const fetchFirebaseConfig = async () => {
-    setLoading(true);
-
-    const projectId = localStorage.getItem("projectId");
-    const accessToken = localStorage.getItem("accessToken");
-
-    if (!projectId || !accessToken) {
-      alert("Project ID or access token is missing.");
-      setLoading(false);
-      return;
-    }
-
-    // Request to backend to fetch Firebase config
-    try {
-      const response = await fetch(
-        import.meta.env.VITE_FIREBASE_FETCH_FUNCTION,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${accessToken}`,
-          },
-          body: JSON.stringify({
-            projectId,
-          }),
-        }
-      );
-
-      const data = await response.json();
-
-      if (response.ok && data.success) {
-        downloadFirebaseConfig(data.firebaseConfig);
-      } else {
-        throw new Error(data.message || "Failed to fetch Firebase config");
-      }
-    } catch (error) {
-      console.error("Error:", error);
-      alert(
-        `An error occurred: ${
-          error.message || "Unable to fetch Firebase config"
-        }`
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const currentProject = localStorage.getItem("projectName");
-
   const manualSetupSelection = () => {
     setManualSetup(!isManualSetup);
-  };
-
-  const additionalSettings = {
-    Analytics: ["Enable Debug Mode", "Set Reporting Threshold"],
-    Authentication: ["Google Auth", "Facebook Auth"],
-    "Firestore Database": ["Enable Offline Persistence", "Set Rules"],
-    Functions: ["Enable Regions", "Set Environment Variables"],
-    "Realtime Database": ["Enable Offline Mode", "Set Database Rules"],
-    Storage: ["Set Rules", "Enable File Versioning"],
   };
 
   return (
@@ -240,6 +109,7 @@ const ToolPage = () => {
           setSelectedFeatures={setSelectedFeatures}
           setSelectedSettings={setSelectedSettings}
         />
+
         <article className="my-20">
           <div
             className="flex justify-center items-center cursor-pointer"
@@ -337,22 +207,10 @@ const ToolPage = () => {
         </article>
       </section>
 
-      {/* Button to download firebase.js */}
-      <div className="flex justify-center mb-20">
-        <button
-          onClick={fetchFirebaseConfig}
-          className="bg-blue-500 text-white px-4 py-2 rounded"
-          disabled={loading}
-        >
-          Download Firebase.js
-        </button>
-
-        {loading && (
-          <div className="flex flex-col items-center justify-center mt-8">
-            <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-          </div>
-        )}
-      </div>
+      <Download
+        selectedFeatures={selectedFeatures}
+        selectedSettings={selectedSettings}
+      />
 
       <LoggedUser />
     </main>
