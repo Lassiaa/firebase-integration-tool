@@ -1,4 +1,4 @@
-import { Routes, Route, HashRouter } from "react-router-dom";
+import { Routes, Route, BrowserRouter } from "react-router-dom";
 import "./App.css";
 
 import FrontPage from "./views/FrontPage";
@@ -8,13 +8,13 @@ import ProjectPage from "./views/ProjectPage";
 function App() {
   return (
     <>
-      <HashRouter>
+      <BrowserRouter>
         <Routes>
           <Route path="/" element={<FrontPage />} />
           <Route path="/project" element={<ProjectPage />} />
           <Route path="/tool" element={<ToolPage />} />
         </Routes>
-      </HashRouter>
+      </BrowserRouter>
     </>
   );
 }

@@ -25,18 +25,23 @@ const FrontPage = () => {
 
   return (
     <main className="w-full px-2">
-      <section>
-        <h1 className="text-center text-3xl font-bold my-8">
-          Firebase Integration Tool
-        </h1>
+      <h1 className="text-center text-3xl font-bold my-8">
+        Firebase Integration Tool
+      </h1>
+      <section className="my-32">
+        <h2 className="text-2xl font-bold text-center my-8">Get started!</h2>
         <p className="text-center">
-          This is the front page of the application.
+          Effortless integration of Firebase services!
         </p>
 
-        <h2 className="text-2xl font-bold text-center my-8">
-          Start by signing in
-        </h2>
-        <div className="flex align-center justify-center my-8">
+        <p className="text-center my-6 max-w-big">
+          Automate your Firebase project setup and get ready-to-use
+          configurations for seamless web app integration with AI. <br />
+          Download a ready to go React Vite project zip file with your new
+          Firebase project integrated.
+        </p>
+
+        <div className="flex align-center justify-center my-12">
           <button
             onClick={logGoogleUser}
             type="button"

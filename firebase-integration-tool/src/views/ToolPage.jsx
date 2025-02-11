@@ -6,7 +6,7 @@ import Download from "../components/Download";
 
 const ToolPage = () => {
   const currentProject = localStorage.getItem("projectName");
-  const [isManualSetup, setManualSetup] = useState(false);
+  const [isManualSetup, setManualSetup] = useState(true);
 
   const [selectedFeatures, setSelectedFeatures] = useState(() => {
     const savedFeatures = localStorage.getItem("selectedFeatures");

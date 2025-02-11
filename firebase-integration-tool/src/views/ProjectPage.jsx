@@ -52,10 +52,8 @@ const ProjectPage = () => {
       }
 
       const data = await response.json();
-      console.log(data);
 
       if (data.success) {
-        console.log("Response JSON:", data);
         localStorage.setItem("projectId", data.firebaseProjectId);
         navigate("/tool");
       } else {
@@ -89,15 +87,18 @@ const ProjectPage = () => {
   return (
     <div>
       <section>
-        <article className="my-20">
+        <h1 className="text-center text-3xl font-bold my-8">
+          Firebase Integration Tool
+        </h1>
+        <article className="my-32">
           <h2 className="text-2xl font-bold text-center">Create Project</h2>
 
-          <div className="w-52 mx-auto">
-            <h3 className="text-xl font-bold text-center my-8 ">
-              Firebase project
-            </h3>
+          <div className="mx-auto">
+            <p className="text-center my-8 ">
+              Give a name for your Firebase project.
+            </p>
             <input
-              className="rounded-md w-full p-2 my-8 mx-auto block text-black"
+              className="rounded-md w-52 p-2 my-8 mx-auto block text-black"
               type="text"
               placeholder="Firebase project..."
               value={projectName}
@@ -108,7 +109,7 @@ const ProjectPage = () => {
           <div className="flex justify-center">
             <button
               onClick={createFirebaseProject}
-              className="bg-blue-500 text-white px-4 py-2 rounded"
+              className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 ease-in-out duration-150"
               disabled={loading}
             >
               Create Firebase Project

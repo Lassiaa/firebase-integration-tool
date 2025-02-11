@@ -4,7 +4,8 @@ import { useState } from "react";
 import { makeApiRequest, roles } from "../utils/openai";
 
 const AISetup = ({ setSelectedFeatures, setSelectedSettings }) => {
-  const [isAISetup, setAISetup] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [isAISetup, setAISetup] = useState(true);
   const [scriptContent, setScriptContent] = useState("");
   const [aiResponse, setAiResponse] = useState(null);
 
@@ -179,29 +180,26 @@ const AISetup = ({ setSelectedFeatures, setSelectedSettings }) => {
       {isAISetup && (
         <>
           <p className="my-8 text-center">
-            Tell about your new project to the AI. <br /> The AI will setup
-            Firebase settings based on your description.
+            Tell about your new project idea to the AI. <br /> The AI will setup
+            Firebase settings based on your description. <br /> Selected
+            settings can be edited in Manual Setup.
           </p>
           <textarea
-            className="rounded-md w-1/2 h-32 p-2 my-8 mx-auto block text-black"
+            className="rounded-md w-1/2 h-32 p-2 my-8 mx-auto block text-black max-w-big"
             name="Prompt"
             placeholder="Prompt"
             value={scriptContent}
             onChange={(e) => setScriptContent(e.target.value)}
           ></textarea>
           <button
-            className="bg-white text-black rounded-md my-8 px-6 py-2 mx-auto block hover:bg-gray-200 ease-in-out duration-150"
+            className="bg-blue-500 text-white px-4 py-2 rounded mx-auto block hover:bg-blue-600 ease-in-out duration-150"
             onClick={handleGenerateClick}
           >
             Submit
           </button>
-          {aiResponse && (
-            <div className="text-center mt-4">
-              {aiResponse.error ? (
-                <p className="text-red-500">{aiResponse.error}</p>
-              ) : (
-                <p className="text-green-500">{aiResponse}</p>
-              )}
+          {loading && (
+            <div className="flex flex-col items-center justify-center mt-8">
+              <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
             </div>
           )}
         </>

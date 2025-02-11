@@ -8,6 +8,9 @@ export default {
         secondary: "#000000",
         tertiary: "#0000ff",
       },
+      width: {
+        big: "420px",
+      },
     },
   },
   plugins: [],
