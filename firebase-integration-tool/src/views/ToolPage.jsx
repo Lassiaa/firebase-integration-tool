@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 import LoggedUser from "../components/LoggedUser";
 import AISetup from "../components/AISetup";
 import Download from "../components/Download";
 
 const ToolPage = () => {
+  const navigate = useNavigate();
   const currentProject = localStorage.getItem("projectName");
   const [isManualSetup, setManualSetup] = useState(true);
 
@@ -99,6 +101,25 @@ const ToolPage = () => {
 
   return (
     <main className="w-full px-2">
+      <button
+        className="fixed top-2 left-2rounded-full p-4"
+        onClick={() => navigate("/project")}
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+          strokeWidth="2.5"
+          stroke="currentColor"
+          className="size-8"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M15.75 19.5 8.25 12l7.5-7.5"
+          />
+        </svg>
+      </button>
       <h1 className="text-center text-3xl font-bold mt-8">
         Firebase Integration Tool
       </h1>
@@ -153,7 +174,7 @@ const ToolPage = () => {
           </div>
 
           {isManualSetup ? (
-            <div className="my-8 w-1/2 mx-auto block">
+            <div className="my-8 max-w-big mx-auto block">
               <ul>
                 {Object.keys(selectedFeatures).map((feature, index) => (
                   <li key={index} className="flex flex-col my-4">

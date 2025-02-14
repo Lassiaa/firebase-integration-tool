@@ -11,6 +11,9 @@ export default {
       width: {
         big: "420px",
       },
+      maxWidth: {
+        big: "420px",
+      },
     },
   },
   plugins: [],

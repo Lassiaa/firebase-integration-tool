@@ -218,6 +218,88 @@ exports.createFirebaseProject = functions.https.onRequest((req, res) => {
   });
 });
 
+// Function to list Firebase projects
+exports.listFirebaseProjects = functions.https.onRequest((req, res) => {
+  corsHandler(req, res, async () => {
+    if (req.method !== "POST") {
+      return res
+        .status(405)
+        .json({ success: false, message: "Method Not Allowed" });
+    }
+
+    try {
+      const accessToken = req.body.accessToken;
+      if (!accessToken) {
+        return res
+          .status(400)
+          .json({ success: false, message: "Missing access token" });
+      }
+
+      // Fetch the Firebase projects
+      const response = await fetch(`${FIREBASE_API_URL}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        return res.status(500).json({
+          success: false,
+          message: "Error fetching Firebase projects",
+          details: errorData,
+        });
+      }
+
+      const projectsData = await response.json();
+      console.log("Received projects data:", projectsData);
+
+      if (!Array.isArray(projectsData.results)) {
+        return res.status(500).json({
+          success: false,
+          message: "'projects' key is missing or not an array in the response",
+        });
+      }
+
+      // Filter web apps
+      const projectsWithWebApps = [];
+
+      for (const project of projectsData.results) {
+        const webAppsResponse = await fetch(
+          `${FIREBASE_API_URL}/${project.projectId}/webApps`,
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${accessToken}`,
+            },
+          }
+        );
+
+        if (webAppsResponse.ok) {
+          const webAppsData = await webAppsResponse.json();
+          if (webAppsData.apps && webAppsData.apps.length > 0) {
+            projectsWithWebApps.push(project);
+          }
+        }
+      }
+
+      return res.json({
+        success: true,
+        message: "Firebase projects with web apps retrieved successfully",
+        results: projectsWithWebApps,
+      });
+    } catch (error) {
+      console.error("Error fetching Firebase projects:", error);
+      return res
+        .status(500)
+        .json({ success: false, message: "Internal Server Error" });
+    }
+  });
+});
+
 // Function to fetch Firebase Web App config
 exports.fetchConfig = functions.https.onRequest((req, res) => {
   corsHandler(req, res, async () => {

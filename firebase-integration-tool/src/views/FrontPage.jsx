@@ -34,7 +34,7 @@ const FrontPage = () => {
           Effortless integration of Firebase services!
         </p>
 
-        <p className="text-center my-6 max-w-big">
+        <p className="text-center my-6">
           Automate your Firebase project setup and get ready-to-use
           configurations for seamless web app integration with AI. <br />
           Download a ready to go React Vite project zip file with your new
