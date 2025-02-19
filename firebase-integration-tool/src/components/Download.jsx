@@ -1,3 +1,4 @@
+/* eslint-disable react/prop-types */
 import { useState } from "react";
 import JSZip from "jszip";
 import { saveAs } from "file-saver";
@@ -42,7 +43,7 @@ const Download = ({ selectedFeatures, selectedSettings }) => {
   };
 
   // Download the firebase.js file
-  const generateFirebaseConfig = async (firebaseConfig) => {
+  const generateFirebaseConfig = async () => {
     await checkAuthProviders();
 
     const imports = [`import { initializeApp } from "firebase/app";`];
@@ -145,7 +146,14 @@ const Download = ({ selectedFeatures, selectedSettings }) => {
   ${imports.join("\n")}
     
   // Firebase configurations
-  const firebaseConfig = ${JSON.stringify(firebaseConfig, null, 2)};
+  const firebaseConfig = { 
+    apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+    authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+    projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+    storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+    messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+    appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  };
       
   // Firebase initializations
   ${initializations.join("\n")}
@@ -160,8 +168,20 @@ const Download = ({ selectedFeatures, selectedSettings }) => {
   const createZipAndDownload = async (firebaseConfig) => {
     const zip = new JSZip();
 
+    // Create .env file
+    zip.file(
+      ".env",
+      `VITE_FIREBASE_API_KEY=${firebaseConfig.apiKey}
+VITE_FIREBASE_AUTH_DOMAIN=${firebaseConfig.authDomain}
+VITE_FIREBASE_PROJECT_ID=${firebaseConfig.projectId}
+VITE_FIREBASE_STORAGE_BUCKET=${firebaseConfig.storageBucket}
+VITE_FIREBASE_MESSAGING_SENDER_ID=${firebaseConfig.messagingSenderId}
+VITE_FIREBASE_APP_ID=${firebaseConfig.appId}
+    `
+    );
+
     // Utils folder content
-    const firebaseConfigContent = await generateFirebaseConfig(firebaseConfig);
+    const firebaseConfigContent = await generateFirebaseConfig();
     zip.file("src/utils/firebase.js", firebaseConfigContent);
 
     zip.file(
